@@ -1,5 +1,5 @@
-import { Box } from "../model/Box";
-import { Utils } from "../Utils";
+import { Box } from '../model/Box';
+import { Utils } from '../Utils';
 
 @Component
 export struct GameBox{
@@ -8,15 +8,17 @@ export struct GameBox{
   @State winner: string = '';
   @State isShow: boolean = false;
 
-  checkWin(){
+  checkWin() {
+    const boxes = this.boxes;
+
     const winPatterns = [
-      // rows
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      // columns
       [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      // cross
       [0, 4, 8], [2, 4, 6]
     ];
+
+    let winner = '';
+    let hasWinner = false;
 
     for (let i = 0; i < winPatterns.length; i++) {
       const a = winPatterns[i][0];
@@ -24,27 +26,32 @@ export struct GameBox{
       const c = winPatterns[i][2];
 
       if (
-        this.boxes[a].value !== '' &&
-          this.boxes[a].value === this.boxes[b].value &&
-          this.boxes[a].value === this.boxes[c].value
+        boxes[a].value !== '' &&
+          boxes[a].value === boxes[b].value &&
+          boxes[a].value === boxes[c].value
       ) {
-
-        this.winner = this.boxes[a].value;
-        this.isShow = true;
-        return;
+        winner = boxes[a].value;
+        hasWinner = true;
+        break;
       }
     }
 
+    if (hasWinner) {
+      this.winner = winner;
+      this.isShow = true;
+      return;
+    }
+
     let isDraw = true;
-    for (let i = 0; i < this.boxes.length; i++) {
-      if (this.boxes[i].value === '') {
+    for (let i = 0; i < boxes.length; i++) {
+      if (boxes[i].value === '') {
         isDraw = false;
         break;
       }
     }
 
     if (isDraw) {
-      this.refresh()
+      this.refresh();
     }
   }
   refresh(){
@@ -57,7 +64,7 @@ export struct GameBox{
   @Builder
   ShowResult(){
     Column(){
-      Text(this.winner + ' is winner!').fontSize(24).fontWeight(FontWeight.Bold).padding(8)
+      Text(`${this.winner} is winner!`).fontSize(24).fontWeight(FontWeight.Bold).padding(8).fontColor(Utils.generateColor(this.winner))
       Button('Restart')
         .backgroundColor(Color.White)
         .fontColor(Utils.generateColor(this.winner))
@@ -74,7 +81,7 @@ export struct GameBox{
     RelativeContainer() {
       Column() {
         GridRow({ columns: 3 }) {
-          ForEach(this.boxes, (item:Box, index: number) => {
+          ForEach(this.boxes, (item:Box) => {
             GridCol() {
               Row() {
                 Text(item.value)
@@ -83,13 +90,14 @@ export struct GameBox{
                   .fontSize(28)
               }.onClick(() =>{
                 if (!item.value && !this.winner) {
+                  const index = this.boxes.indexOf(item)
                   this.boxes[index] = new Box(this.pen)
-                  this.pen = this.pen == 'X' ? 'O' : 'X';
+                  this.pen = this.pen === 'X' ? 'O' : 'X';
                 }
               })
               .height('33%').width('33%').justifyContent(FlexAlign.Center)
             }.border( { 'color': Color.Gray, 'width': 1 })
-          }, (item: Box, index: number) => `${index}${JSON.stringify(item)}`)
+          }, (item: Box) => item.id)
         }
         .width('100%').height('100%')
       }.bindSheet(this.isShow, this.ShowResult(), {height: '50%', onDisappear: () => this.refresh(), showClose:false})
